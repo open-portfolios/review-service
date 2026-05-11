@@ -1,0 +1,215 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+dotenv:
+  - .env
+
+vars:
+  GOHOSTOS: { sh: go env GOHOSTOS }
+  GOPATH: { sh: go env GOPATH }
+  VERSION: { sh: git describe --tags --always }
+  CLI_TOOLS:
+    map:
+      wire: github.com/google/wire/cmd/wire
+      kratos: github.com/go-kratos/kratos/cmd/kratos/v2
+      protoc-gen-go: google.golang.org/protobuf/cmd/protoc-gen-go
+      protoc-gen-go-grpc: google.golang.org/grpc/cmd/protoc-gen-go-grpc
+      protoc-gen-go-http: github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v2
+      protoc-gen-openapi: github.com/google/gnostic/cmd/protoc-gen-openapi
+      protoc-gen-validate: github.com/envoyproxy/protoc-gen-validate
+      protoc-gen-go-errors: github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v2
+  SQL_FILES:
+    sh: shopt -s globstar; for s in sql/**/*.sql; do s=${s//\\//}; echo "$s"; done
+  INTERNAL_PROTO_FILES:
+    sh: shopt -s globstar; for p in internal/**/*.proto; do p=${p//\\//}; echo -n "$p "; done
+  API_PROTO_FILES:
+    sh: shopt -s globstar; for p in api/**/*.proto; do p=${p//\\//}; echo -n "$p "; done
+  WIRE_ENTRYPOINTS:
+    sh: |
+      shopt -s globstar
+      for entry in **/wire.go; do
+        entry=${entry//\\//}
+        entry=${entry%%/wire.go}
+        echo "$entry"
+      done
+  CONF_GENERATION_ARGS:
+    - --proto_path=./internal
+    - --proto_path=./third_party
+    - --go_out=paths=source_relative:./internal
+  API_GENERATION_ARGS:
+    - --proto_path=./api
+    - --proto_path=./third_party
+    - --go_out=paths=source_relative:./api
+    - --go-http_out=paths=source_relative:./api
+    - --go-grpc_out=paths=source_relative:./api
+    - --openapi_out=fq_schema_naming=true,default_response=false:.
+    - --validate_out=paths=source_relative,lang=go:./api
+    - --go-errors_out=paths=source_relative:./api
+  CONTAINER_ENGINE:
+    sh: |
+      if command -v podman > /dev/null 2>&1; then
+        echo -n "podman"
+      elif command -v docker > /dev/null 2>&1; then
+        echo -n "docker"
+      fi
+  DATABASE_CONNECT_COMMAND: >-
+    mysql --default-character-set=utf8mb4 -h $REVIEW_MYSQL_HOST -P $REVIEW_MYSQL_PORT -uroot
+    -p$REVIEW_MYSQL_ROOT_PASSWORD
+  DATABASE_EXEC_COMMAND: >-
+    mysql --default-character-set=utf8mb4 -h $REVIEW_MYSQL_HOST -P $REVIEW_MYSQL_PORT -uroot
+    -p$REVIEW_MYSQL_ROOT_PASSWORD
+  CREATE_DATABASE_STATEMENT: >-
+    CREATE DATABASE IF NOT EXISTS $REVIEW_MYSQL_DATABASE;
+  EXECUTABLES:
+    sh: |
+      for p in cmd/*; do
+        p=${p//\\//}
+        case "$p" in
+          *gen)
+            continue
+            ;;
+        esac
+        echo "$p"
+      done
+  BUILDFLAGS: -trimpath -gcflags "-l=4" -ldflags "-s -w -X main.Version={{.VERSION}}"
+
+tasks:
+  install:
+    desc: Install CLI tools
+    cmds:
+      - for: { var: CLI_TOOLS }
+        cmd: go install "{{.ITEM}}@latest"
+        # yaml-language-server-disable
+        if: "! command -v {{.KEY}} > /dev/null 2>&1"
+    silent: true
+
+  up:
+    desc: Compose up containers
+    preconditions:
+      - "[ -n {{.CONTAINER_ENGINE}} ]"
+    cmds:
+      - "{{.CONTAINER_ENGINE}} compose up -d 2> /dev/null"
+    silent: true
+
+  down:
+    desc: Compose down containers
+    preconditions:
+      - "[ -n {{.CONTAINER_ENGINE}} ]"
+    cmds:
+      - "{{.CONTAINER_ENGINE}} compose down 2> /dev/null"
+    silent: true
+
+  clean:
+    desc: Compose down containers and delete volumes
+    preconditions:
+      - "[ -n {{.CONTAINER_ENGINE}} ]"
+    cmds:
+      - "{{.CONTAINER_ENGINE}} compose down -v 2> /dev/null"
+    silent: true
+
+  database:
+    desc: Connect to database CLI
+    cmds:
+      - task: database-host
+      - task: database-container
+    silent: true
+
+  database-host:
+    internal: true
+    desc: Connect to database using host CLI
+    if: "command -v mysql > /dev/null 2>&1"
+    cmds:
+      - "{{.DATABASE_CONNECT_COMMAND}}"
+    silent: true
+    interactive: true
+
+  database-container:
+    internal: true
+    desc: Connect to database using containerized CLI
+    if: "! command -v mysql > /dev/null 2>&1"
+    preconditions:
+      - "[ -n {{.CONTAINER_ENGINE}} ]"
+    cmds:
+      - "{{.CONTAINER_ENGINE}} exec -it review-mysql {{.DATABASE_CONNECT_COMMAND}}"
+    silent: true
+    interactive: true
+
+  migrate:
+    desc: Migrate SQL files into database
+    cmds:
+      - task: migrate-host
+      - task: migrate-container
+      - go run ./cmd/gen
+    silent: true
+
+  migrate-host:
+    internal: true
+    desc: Migrate SQL files into database using host CLI
+    if: "command -v mysql > /dev/null 2>&1"
+    cmds:
+      - "{{.DATABASE_EXEC_COMMAND}} -e \"{{.CREATE_DATABASE_STATEMENT}}\""
+      - for: { var: SQL_FILES }
+        cmd: "{{.DATABASE_EXEC_COMMAND}} $REVIEW_MYSQL_DATABASE < {{.ITEM}}"
+    silent: true
+
+  migrate-container:
+    internal: true
+    desc: Migrate SQL files into database using containerized CLI
+    if: "! command -v mysql > /dev/null 2>&1"
+    preconditions:
+      - "[ -n {{.CONTAINER_ENGINE}} ]"
+    cmds:
+      - "{{.CONTAINER_ENGINE}} exec -i review-mysql {{.DATABASE_EXEC_COMMAND}} -e \"{{.CREATE_DATABASE_STATEMENT}}\""
+      - for: { var: SQL_FILES }
+        cmd: "{{.CONTAINER_ENGINE}} exec -i review-mysql {{.DATABASE_EXEC_COMMAND}} $REVIEW_MYSQL_DATABASE < {{.ITEM}}"
+    silent: true
+
+  serve:
+    desc: Start review server
+    cmds:
+      - go run ./cmd/review-service
+    silent: true
+    interactive: true
+
+  all:
+    desc: Perform `conf`, `api` and `wire` tasks
+    cmds:
+      - task: conf
+      - task: api
+      - task: wire
+
+  conf:
+    desc: Generate configuration protobuf
+    deps:
+      - install
+    cmds:
+      - protoc {{.CONF_GENERATION_ARGS | join " "}} {{.INTERNAL_PROTO_FILES}}
+    silent: true
+
+  api:
+    desc: Generate API protobuf
+    deps:
+      - install
+    cmds:
+      - protoc {{.API_GENERATION_ARGS | join " "}} {{.API_PROTO_FILES}}
+      - for: { var: API_PROTO_FILES }
+        cmd: kratos proto server {{.ITEM}}
+    silent: true
+
+  wire:
+    desc: Generate Dependency Injection code
+    deps:
+      - install
+    cmds:
+      - for: { var: WIRE_ENTRYPOINTS }
+        cmd: cd "{{.ITEM}}" && wire
+    silent: true
+
+  build:
+    desc: Build executables
+    cmds:
+      - mkdir -p bin
+      - for: { var: EXECUTABLES }
+        cmd: go build {{.BUILDFLAGS}} -o bin/ "./{{.ITEM}}"
+    silent: true

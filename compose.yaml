@@ -1,0 +1,14 @@
+services:
+  mysql:
+    image: mysql:9
+    container_name: review-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${REVIEW_MYSQL_ROOT_PASSWORD}
+    ports:
+      - ${REVIEW_MYSQL_PORT}:3306
+    volumes:
+      - review-mysql-data:/var/lib/mysql
+
+volumes:
+  review-mysql-data:
+    name: review-mysql-data

@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "golang.go",
+        "humao.rest-client",
+        "redhat.vscode-yaml",
+        "drblury.protobuf-vsc",
+        "tamasfe.even-better-toml",
+        "task.vscode-task",
+    ]
+}

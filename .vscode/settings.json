@@ -1,0 +1,12 @@
+{
+    "gopls": {
+        "build.buildFlags": [
+            "--tags=wireinject"
+        ]
+    },
+    "protobuf.includes": [
+        "${workspaceFolder}/third_party",
+        "${workspaceFolder}/internal",
+        "${workspaceFolder}/api",
+    ]
+}

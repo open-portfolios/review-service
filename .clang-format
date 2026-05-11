@@ -1,0 +1,6 @@
+Language: Proto
+BasedOnStyle: Microsoft
+ColumnLimit: 120
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignTrailingComments: true

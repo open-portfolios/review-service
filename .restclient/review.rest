@@ -1,0 +1,12 @@
+# A simple review
+POST http://127.0.0.1:8000/v1/review HTTP/1.1
+Content-Type: application/json
+
+{
+    "orderID": 123,
+    "userID": 5,
+    "score": 4,
+    "expressScore": 5,
+    "serviceScore": 4,
+    "content": "it's fine but a bit expensive"
+}
