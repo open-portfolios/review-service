@@ -5,7 +5,7 @@ import (
 	"os"
 
 	dotenv "github.com/joho/godotenv"
-	"github.com/open-portfolios/review/internal/conf"
+	"github.com/open-portfolios/review-service/internal/conf"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"

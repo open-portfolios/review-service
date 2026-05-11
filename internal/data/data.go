@@ -3,8 +3,8 @@ package data
 import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
-	"github.com/open-portfolios/review/internal/conf"
-	"github.com/open-portfolios/review/internal/data/query"
+	"github.com/open-portfolios/review-service/internal/conf"
+	"github.com/open-portfolios/review-service/internal/data/query"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )

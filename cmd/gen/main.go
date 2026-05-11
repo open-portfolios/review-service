@@ -8,7 +8,7 @@ import (
 	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/go-kratos/kratos/v2/log"
 	dotenv "github.com/joho/godotenv"
-	"github.com/open-portfolios/review/internal/conf"
+	"github.com/open-portfolios/review-service/internal/conf"
 	"gorm.io/driver/mysql"
 	"gorm.io/gen"
 	"gorm.io/gorm"

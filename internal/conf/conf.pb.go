@@ -7,12 +7,13 @@
 package conf
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 )
 
 const (
@@ -514,7 +515,7 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\n" +
 	"start_time\x18\x01 \x01(\tR\tstartTime\x12\x1d\n" +
 	"\n" +
-	"machine_id\x18\x02 \x01(\x03R\tmachineIdB6Z4github.com/open-portfolios/review/internal/conf;confb\x06proto3"
+	"machine_id\x18\x02 \x01(\x03R\tmachineIdB?Z=github.com/open-portfolios/review-service/internal/conf;confb\x06proto3"
 
 var (
 	file_conf_conf_proto_rawDescOnce sync.Once

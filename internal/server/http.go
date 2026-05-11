@@ -1,9 +1,9 @@
 package server
 
 import (
-	v1 "github.com/open-portfolios/review/api/review/v1"
-	"github.com/open-portfolios/review/internal/conf"
-	"github.com/open-portfolios/review/internal/service"
+	"github.com/open-portfolios/review-service/internal/conf"
+	"github.com/open-portfolios/review-service/internal/service"
+	v1 "github.com/open-portfolios/reviewapis/gen/go/review/v1"
 
 	"github.com/go-kratos/kratos/contrib/middleware/validate/v2"
 	"github.com/go-kratos/kratos/v2/log"

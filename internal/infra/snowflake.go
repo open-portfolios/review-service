@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/open-portfolios/review/internal/biz"
-	"github.com/open-portfolios/review/internal/conf"
+	"github.com/open-portfolios/review-service/internal/biz"
+	"github.com/open-portfolios/review-service/internal/conf"
 	"github.com/sony/sonyflake/v2"
 )
 

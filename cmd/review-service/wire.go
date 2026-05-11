@@ -6,12 +6,12 @@
 package main
 
 import (
-	"github.com/open-portfolios/review/internal/biz"
-	"github.com/open-portfolios/review/internal/conf"
-	"github.com/open-portfolios/review/internal/data"
-	"github.com/open-portfolios/review/internal/infra"
-	"github.com/open-portfolios/review/internal/server"
-	"github.com/open-portfolios/review/internal/service"
+	"github.com/open-portfolios/review-service/internal/biz"
+	"github.com/open-portfolios/review-service/internal/conf"
+	"github.com/open-portfolios/review-service/internal/data"
+	"github.com/open-portfolios/review-service/internal/infra"
+	"github.com/open-portfolios/review-service/internal/server"
+	"github.com/open-portfolios/review-service/internal/service"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"

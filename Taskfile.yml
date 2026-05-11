@@ -14,17 +14,25 @@ vars:
       wire: github.com/google/wire/cmd/wire
       kratos: github.com/go-kratos/kratos/cmd/kratos/v2
       protoc-gen-go: google.golang.org/protobuf/cmd/protoc-gen-go
-      protoc-gen-go-grpc: google.golang.org/grpc/cmd/protoc-gen-go-grpc
-      protoc-gen-go-http: github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v2
       protoc-gen-openapi: github.com/google/gnostic/cmd/protoc-gen-openapi
-      protoc-gen-validate: github.com/envoyproxy/protoc-gen-validate
-      protoc-gen-go-errors: github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v2
   SQL_FILES:
     sh: shopt -s globstar; for s in sql/**/*.sql; do s=${s//\\//}; echo "$s"; done
   INTERNAL_PROTO_FILES:
     sh: shopt -s globstar; for p in internal/**/*.proto; do p=${p//\\//}; echo -n "$p "; done
   API_PROTO_FILES:
-    sh: shopt -s globstar; for p in api/**/*.proto; do p=${p//\\//}; echo -n "$p "; done
+    sh: |
+      shopt -s globstar
+      for dir in apis/*/; do
+        dir=${dir//\\//}
+        dir=${dir%%/}
+        if [ "$dir" = "apis/thirdparty" ] || [ "$dir" = "apis/gen" ]; then
+          continue
+        fi
+        for p in $dir/**/*.proto; do
+          p=${p//\\//}
+          echo -n "$p "
+        done
+      done
   WIRE_ENTRYPOINTS:
     sh: |
       shopt -s globstar
@@ -35,17 +43,12 @@ vars:
       done
   CONF_GENERATION_ARGS:
     - --proto_path=./internal
-    - --proto_path=./third_party
+    - --proto_path=./apis/thirdparty
     - --go_out=paths=source_relative:./internal
   API_GENERATION_ARGS:
-    - --proto_path=./api
-    - --proto_path=./third_party
-    - --go_out=paths=source_relative:./api
-    - --go-http_out=paths=source_relative:./api
-    - --go-grpc_out=paths=source_relative:./api
+    - --proto_path=./apis
+    - --proto_path=./apis/thirdparty
     - --openapi_out=fq_schema_naming=true,default_response=false:.
-    - --validate_out=paths=source_relative,lang=go:./api
-    - --go-errors_out=paths=source_relative:./api
   CONTAINER_ENGINE:
     sh: |
       if command -v podman > /dev/null 2>&1; then
@@ -148,7 +151,7 @@ tasks:
     desc: Migrate SQL files into database using host CLI
     if: "command -v mysql > /dev/null 2>&1"
     cmds:
-      - "{{.DATABASE_EXEC_COMMAND}} -e \"{{.CREATE_DATABASE_STATEMENT}}\""
+      - '{{.DATABASE_EXEC_COMMAND}} -e "{{.CREATE_DATABASE_STATEMENT}}"'
       - for: { var: SQL_FILES }
         cmd: "{{.DATABASE_EXEC_COMMAND}} $REVIEW_MYSQL_DATABASE < {{.ITEM}}"
     silent: true
@@ -160,7 +163,7 @@ tasks:
     preconditions:
       - "[ -n {{.CONTAINER_ENGINE}} ]"
     cmds:
-      - "{{.CONTAINER_ENGINE}} exec -i review-mysql {{.DATABASE_EXEC_COMMAND}} -e \"{{.CREATE_DATABASE_STATEMENT}}\""
+      - '{{.CONTAINER_ENGINE}} exec -i review-mysql {{.DATABASE_EXEC_COMMAND}} -e "{{.CREATE_DATABASE_STATEMENT}}"'
       - for: { var: SQL_FILES }
         cmd: "{{.CONTAINER_ENGINE}} exec -i review-mysql {{.DATABASE_EXEC_COMMAND}} $REVIEW_MYSQL_DATABASE < {{.ITEM}}"
     silent: true

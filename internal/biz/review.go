@@ -3,10 +3,10 @@ package biz
 import (
 	"context"
 
-	v1 "github.com/open-portfolios/review/api/review/v1"
+	v1 "github.com/open-portfolios/reviewapis/gen/go/review/v1"
 
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/open-portfolios/review/internal/data/model"
+	"github.com/open-portfolios/review-service/internal/data/model"
 )
 
 type ReviewRepo interface {

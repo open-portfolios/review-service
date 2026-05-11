@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/open-portfolios/review/internal/biz"
-	"github.com/open-portfolios/review/internal/data/model"
-	"github.com/open-portfolios/review/internal/data/query"
+	"github.com/open-portfolios/review-service/internal/biz"
+	"github.com/open-portfolios/review-service/internal/data/model"
+	"github.com/open-portfolios/review-service/internal/data/query"
 )
 
 type reviewRepo struct {
